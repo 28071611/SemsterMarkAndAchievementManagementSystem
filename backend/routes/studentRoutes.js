@@ -57,7 +57,7 @@ router.get("/stats", async (req, res) => {
  */
 router.get("/search", async (req, res) => {
   try {
-    const { q, department, year, hasArrears, minCgpa, subjectCode, subjectGrade } = req.query;
+    const { q, department, year, hasArrears, minCgpa, subjectCode, subjectGrade, subjectName } = req.query;
     let query = {};
 
     if (q) {
@@ -73,15 +73,21 @@ router.get("/search", async (req, res) => {
     if (minCgpa) query.cgpa = { $gte: parseFloat(minCgpa) };
 
     // Subject/Grade Filter
-    if (subjectCode || subjectGrade) {
+    if (subjectCode || subjectGrade || subjectName) {
       let semesterQuery = {};
+      let subjectMatch = {};
 
-      if (subjectCode && subjectGrade) {
-        semesterQuery.subjects = { $elemMatch: { code: { $regex: subjectCode, $options: 'i' }, grade: subjectGrade.toUpperCase() } };
-      } else if (subjectCode) {
-        semesterQuery['subjects.code'] = { $regex: subjectCode, $options: 'i' };
-      } else if (subjectGrade) {
-        semesterQuery['subjects.grade'] = subjectGrade.toUpperCase();
+      if (subjectCode) subjectMatch.code = { $regex: subjectCode, $options: 'i' };
+      if (subjectGrade) subjectMatch.grade = subjectGrade.toUpperCase();
+      if (subjectName) subjectMatch.title = { $regex: subjectName, $options: 'i' };
+
+      if (Object.keys(subjectMatch).length > 1) {
+        semesterQuery.subjects = { $elemMatch: subjectMatch };
+      } else {
+        const key = Object.keys(subjectMatch)[0];
+        if (key === 'code') semesterQuery['subjects.code'] = subjectMatch.code;
+        else if (key === 'grade') semesterQuery['subjects.grade'] = subjectMatch.grade;
+        else if (key === 'title') semesterQuery['subjects.title'] = subjectMatch.title;
       }
 
       const matchingSemesters = await Semester.find(semesterQuery).select('studentId');

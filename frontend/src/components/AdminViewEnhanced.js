@@ -10,6 +10,7 @@ const AdminView = ({ students, setStudents, setView, adminToken }) => {
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [selectedYear, setSelectedYear] = useState('all');
   const [subjectCodeFilter, setSubjectCodeFilter] = useState('');
+  const [subjectNameFilter, setSubjectNameFilter] = useState('');
   const [subjectGradeFilter, setSubjectGradeFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -317,6 +318,7 @@ const AdminView = ({ students, setStudents, setView, adminToken }) => {
         hasArrears: filterBy === 'arrears' ? 'true' : '',
         minCgpa: filterBy === 'high' ? '8' : (filterBy === 'medium' ? '6' : ''),
         subjectCode: subjectCodeFilter,
+        subjectName: subjectNameFilter,
         subjectGrade: subjectGradeFilter !== 'all' ? subjectGradeFilter : ''
       };
       const results = await api.searchStudents(params);
@@ -663,7 +665,7 @@ const AdminView = ({ students, setStudents, setView, adminToken }) => {
           </div>
 
           {showFilters && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
               <select
                 value={filterBy}
                 onChange={(e) => setFilterBy(e.target.value)}
@@ -702,6 +704,14 @@ const AdminView = ({ students, setStudents, setView, adminToken }) => {
                 placeholder="Subject Code (e.g. CS101)"
                 value={subjectCodeFilter}
                 onChange={(e) => setSubjectCodeFilter(e.target.value)}
+                className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-700 border-none outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+              />
+
+              <input
+                type="text"
+                placeholder="Subject Name (e.g. Mathematics)"
+                value={subjectNameFilter}
+                onChange={(e) => setSubjectNameFilter(e.target.value)}
                 className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-700 border-none outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
               />
 
