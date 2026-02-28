@@ -39,9 +39,31 @@ app.use("/api/students", studentRoutes);
 app.use("/api/auth", authRoutes);
 
 // Test route
-app.get("/", (req, res) => {
+app.get("/api/test", (req, res) => {
   res.send("EduTrack API Running");
 });
+
+// Serve frontend static files
+const __dirname = path.resolve();
+if (process.env.NODE_ENV === 'production') {
+  // Check if we are running from root or backend folder
+  const frontendPath = path.join(__dirname, 'frontend/build');
+  const fallbackPath = path.join(__dirname, '../frontend/build');
+
+  app.use(express.static(frontendPath));
+  app.use(express.static(fallbackPath)); // Fallback if running from within 'backend' folder
+
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api/') && !req.path.startsWith('/uploads/')) {
+      // Try resolving in either path
+      res.sendFile(path.resolve(frontendPath, 'index.html'), (err) => {
+        if (err) {
+          res.sendFile(path.resolve(fallbackPath, 'index.html'));
+        }
+      });
+    }
+  });
+}
 
 // DB + Server
 mongoose
