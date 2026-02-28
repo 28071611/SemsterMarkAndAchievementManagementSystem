@@ -43,50 +43,37 @@ app.get("/api/test", (req, res) => {
   res.send("EduTrack API Running");
 });
 
+import fs from 'fs';
+
 // Serve frontend static files
-const rootDir = process.cwd();
-const isProduction = process.env.NODE_ENV === 'production';
+const __dirname = path.resolve();
+const buildPath = path.join(__dirname, 'build');
 
-// In production, serve the frontend build
-if (isProduction || process.env.ALWAYS_SERVE_FRONTEND === 'true') {
-  const possiblePaths = [
-    path.join(rootDir, 'frontend', 'build'),
-    path.join(rootDir, 'build'), // if build is at root
-    path.join(rootDir, '..', 'frontend', 'build')
-  ];
+// Detection for production (Render sets RENDER=true or NODE_ENV=production)
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
 
-  possiblePaths.forEach(p => {
-    app.use(express.static(p));
-  });
+if (isProduction) {
+  console.log(`🚀 Production Mode: Serving static files from ${buildPath}`);
 
-  app.get('*', (req, res) => {
-    // Exclude API and uploads
-    if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/')) {
-      return res.status(404).json({ message: "API route not found" });
-    }
+  if (fs.existsSync(buildPath)) {
+    app.use(express.static(buildPath));
 
-    // Try each possible path for index.html
-    let served = false;
-    for (const p of possiblePaths) {
-      const indexPath = path.join(p, 'index.html');
-      // res.sendFile is async, so we use the callback to try next
-      if (!served) {
-        res.sendFile(indexPath, (err) => {
-          if (!err) {
-            served = true;
-          } else if (p === possiblePaths[possiblePaths.length - 1]) {
-            // Last one failed, send error
-            res.status(404).send("Frontend build not found. Please ensure the build command 'npm run build' was executed successfully.");
-          }
-        });
-        break; // Stop loop and let the callback handle things (though res.sendFile isn't ideal here for a loop)
+    app.get('*', (req, res) => {
+      if (!req.path.startsWith('/api/') && !req.path.startsWith('/uploads/')) {
+        res.sendFile(path.join(buildPath, 'index.html'));
       }
-    }
-  });
+    });
+  } else {
+    console.error(`❌ Build folder NOT found at ${buildPath}`);
+    app.get('*', (req, res) => {
+      if (!req.path.startsWith('/api/')) {
+        res.status(500).send("Server Error: Frontend build folder missing. Please check deployment logs.");
+      }
+    });
+  }
 } else {
-  // Default root for non-production
   app.get("/", (req, res) => {
-    res.send("EduTrack API is running (Development Mode). Front-end not served.");
+    res.send("EduTrack API is running (Development Mode).");
   });
 }
 
