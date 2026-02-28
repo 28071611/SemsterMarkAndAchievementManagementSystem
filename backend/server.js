@@ -44,24 +44,49 @@ app.get("/api/test", (req, res) => {
 });
 
 // Serve frontend static files
-const __dirname = path.resolve();
-if (process.env.NODE_ENV === 'production') {
-  // Check if we are running from root or backend folder
-  const frontendPath = path.join(__dirname, 'frontend/build');
-  const fallbackPath = path.join(__dirname, '../frontend/build');
+const rootDir = process.cwd();
+const isProduction = process.env.NODE_ENV === 'production';
 
-  app.use(express.static(frontendPath));
-  app.use(express.static(fallbackPath)); // Fallback if running from within 'backend' folder
+// In production, serve the frontend build
+if (isProduction || process.env.ALWAYS_SERVE_FRONTEND === 'true') {
+  const possiblePaths = [
+    path.join(rootDir, 'frontend', 'build'),
+    path.join(rootDir, 'build'), // if build is at root
+    path.join(rootDir, '..', 'frontend', 'build')
+  ];
+
+  possiblePaths.forEach(p => {
+    app.use(express.static(p));
+  });
 
   app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api/') && !req.path.startsWith('/uploads/')) {
-      // Try resolving in either path
-      res.sendFile(path.resolve(frontendPath, 'index.html'), (err) => {
-        if (err) {
-          res.sendFile(path.resolve(fallbackPath, 'index.html'));
-        }
-      });
+    // Exclude API and uploads
+    if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/')) {
+      return res.status(404).json({ message: "API route not found" });
     }
+
+    // Try each possible path for index.html
+    let served = false;
+    for (const p of possiblePaths) {
+      const indexPath = path.join(p, 'index.html');
+      // res.sendFile is async, so we use the callback to try next
+      if (!served) {
+        res.sendFile(indexPath, (err) => {
+          if (!err) {
+            served = true;
+          } else if (p === possiblePaths[possiblePaths.length - 1]) {
+            // Last one failed, send error
+            res.status(404).send("Frontend build not found. Please ensure the build command 'npm run build' was executed successfully.");
+          }
+        });
+        break; // Stop loop and let the callback handle things (though res.sendFile isn't ideal here for a loop)
+      }
+    }
+  });
+} else {
+  // Default root for non-production
+  app.get("/", (req, res) => {
+    res.send("EduTrack API is running (Development Mode). Front-end not served.");
   });
 }
 
