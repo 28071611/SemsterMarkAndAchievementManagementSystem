@@ -9,6 +9,8 @@ const AdminView = ({ students, setStudents, setView, adminToken }) => {
   const [filterBy, setFilterBy] = useState('all');
   const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [selectedYear, setSelectedYear] = useState('all');
+  const [subjectCodeFilter, setSubjectCodeFilter] = useState('');
+  const [subjectGradeFilter, setSubjectGradeFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showStudentDetails, setShowStudentDetails] = useState(false);
@@ -313,7 +315,9 @@ const AdminView = ({ students, setStudents, setView, adminToken }) => {
         department: selectedDepartment !== 'all' ? selectedDepartment : '',
         year: selectedYear !== 'all' ? selectedYear : '',
         hasArrears: filterBy === 'arrears' ? 'true' : '',
-        minCgpa: filterBy === 'high' ? '8' : (filterBy === 'medium' ? '6' : '')
+        minCgpa: filterBy === 'high' ? '8' : (filterBy === 'medium' ? '6' : ''),
+        subjectCode: subjectCodeFilter,
+        subjectGrade: subjectGradeFilter !== 'all' ? subjectGradeFilter : ''
       };
       const results = await api.searchStudents(params);
       setStudents(results);
@@ -659,7 +663,7 @@ const AdminView = ({ students, setStudents, setView, adminToken }) => {
           </div>
 
           {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
               <select
                 value={filterBy}
                 onChange={(e) => setFilterBy(e.target.value)}
@@ -691,6 +695,30 @@ const AdminView = ({ students, setStudents, setView, adminToken }) => {
                 {stats.years.map(year => (
                   <option key={year} value={year}>{year}</option>
                 ))}
+              </select>
+
+              <input
+                type="text"
+                placeholder="Subject Code (e.g. CS101)"
+                value={subjectCodeFilter}
+                onChange={(e) => setSubjectCodeFilter(e.target.value)}
+                className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-700 border-none outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+              />
+
+              <select
+                value={subjectGradeFilter}
+                onChange={(e) => setSubjectGradeFilter(e.target.value)}
+                className="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-700 border-none outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+              >
+                <option value="all">Any Grade</option>
+                <option value="O">O Grade</option>
+                <option value="A+">A+ Grade</option>
+                <option value="A">A Grade</option>
+                <option value="B+">B+ Grade</option>
+                <option value="B">B Grade</option>
+                <option value="C">C Grade</option>
+                <option value="P">P Grade</option>
+                <option value="F">F Grade</option>
               </select>
             </div>
           )}

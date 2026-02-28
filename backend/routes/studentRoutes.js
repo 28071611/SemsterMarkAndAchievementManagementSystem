@@ -57,7 +57,7 @@ router.get("/stats", async (req, res) => {
  */
 router.get("/search", async (req, res) => {
   try {
-    const { q, department, year, hasArrears, minCgpa } = req.query;
+    const { q, department, year, hasArrears, minCgpa, subjectCode, subjectGrade } = req.query;
     let query = {};
 
     if (q) {
@@ -71,6 +71,29 @@ router.get("/search", async (req, res) => {
     if (year) query.year = year;
     if (hasArrears === 'true') query.arrears = { $gt: 0 };
     if (minCgpa) query.cgpa = { $gte: parseFloat(minCgpa) };
+
+    // Subject/Grade Filter
+    if (subjectCode || subjectGrade) {
+      let semesterQuery = {};
+
+      if (subjectCode && subjectGrade) {
+        semesterQuery.subjects = { $elemMatch: { code: { $regex: subjectCode, $options: 'i' }, grade: subjectGrade.toUpperCase() } };
+      } else if (subjectCode) {
+        semesterQuery['subjects.code'] = { $regex: subjectCode, $options: 'i' };
+      } else if (subjectGrade) {
+        semesterQuery['subjects.grade'] = subjectGrade.toUpperCase();
+      }
+
+      const matchingSemesters = await Semester.find(semesterQuery).select('studentId');
+      const studentIds = [...new Set(matchingSemesters.map(s => s.studentId.toString()))];
+
+      if (query._id) {
+        // If query._id already exists (unlikely in this search but good for robustness)
+        // We take the intersection, but here we just assign if not already restricted
+      }
+
+      query._id = { $in: studentIds };
+    }
 
     const students = await Student.find(query);
     res.json(students);
