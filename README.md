@@ -21,13 +21,17 @@ A comprehensive web-based platform for managing student academic records, semest
 - Bcrypt password hashing
 - Role-based access control
 - Rate limiting for API endpoints
-- CORS protection
+- Password hashing with bcrypt
+- Route protection middleware
 
 ### 📈 Performance Features
 - Cluster mode support for high availability
 - Compression middleware for faster responses
 - Memory-efficient operations
 - Health check endpoints
+
+## 🚀 Deployment
+For instructions on how to deploy this project for free on Render and MongoDB Atlas, please see the [Production Deployment Guide](.gemini/antigravity/brain/bbffcf9f-f43e-4891-9998-9e883063a9f7/DEPLOYMENT_GUIDE_PROD.md).
 
 ## 🛠️ Technology Stack
 
