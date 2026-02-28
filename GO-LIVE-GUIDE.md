@@ -20,7 +20,7 @@ app.use(cors({
 ```
 
 #### **3. Environment Variables**
-**Frontend (Vercel):**
+**Frontend (Firebase):**
 ```
 REACT_APP_API_URL=https://edutrack-api.onrender.com/api
 NODE_ENV=production
@@ -38,15 +38,15 @@ JWT_SECRET=edutrack_secret
 
 #### **Production URLs:**
 ```
-Frontend: https://edutrack.vercel.app
+Frontend: https://edutrack-38472.web.app
 Backend:  https://edutrack-api.onrender.com
 API:      https://edutrack-api.onrender.com/api
 ```
 
 #### **Access Points:**
-- **Student Registration**: https://edutrack.vercel.app/register
-- **Student Login**: https://edutrack.vercel.app/login
-- **Admin Panel**: https://edutrack.vercel.app/admin (Ctrl+Shift+A)
+- **Student Registration**: https://edutrack-38472.web.app/register
+- **Student Login**: https://edutrack-38472.web.app/login
+- **Admin Panel**: https://edutrack-38472.web.app/admin (Ctrl+Shift+A)
 - **API Documentation**: https://edutrack-api.onrender.com/api
 
 ### **📱 Mobile Access**

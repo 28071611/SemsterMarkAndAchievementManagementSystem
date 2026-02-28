@@ -4,7 +4,7 @@
 
 ### **🚀 Primary Deployment (Recommended)**
 ```
-Frontend: https://edutrack.vercel.app
+Frontend: https://edutrack-38472.web.app
 Backend:  https://edutrack-api.onrender.com
 API:      https://edutrack-api.onrender.com/api
 ```
@@ -41,15 +41,24 @@ API:      http://localhost:5000/api
 
 ## 🌐 **Access from Anywhere**
 
+#### **2. Update Backend CORS**
+```javascript
+// In backend/server.js
+app.use(cors({
+  origin: ['https://edutrack-38472.web.app', 'http://localhost:3000'],
+  credentials: true
+}));
+```
+
 ### **For Students:**
-1. **Register**: https://edutrack.vercel.app/register
-2. **Login**: https://edutrack.vercel.app/login
-3. **Dashboard**: https://edutrack.vercel.app/dashboard
+1. **Register**: https://edutrack-38472.web.app/register
+2. **Login**: https://edutrack-38472.web.app/login
+3. **Dashboard**: https://edutrack-38472.web.app/dashboard
 
 ### **For Admin:**
-1. **Access**: https://edutrack.vercel.app/admin
+1. **Access**: https://edutrack-38472.web.app/admin
 2. **Login**: Ctrl+Shift+A
-3. **Management**: https://edutrack.vercel.app/admin/panel
+3. **Management**: https://edutrack-38472.web.app/admin/panel
 
 ## 📱 **Mobile Access**
 - **Responsive Design**: Works on all devices

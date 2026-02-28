@@ -19,7 +19,24 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
 }));
 
 // Middlewares
-app.use(cors());
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://edutrack-38472.web.app",
+  "https://edutrack-38472.firebaseapp.com"
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
