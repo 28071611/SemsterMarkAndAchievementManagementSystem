@@ -40,7 +40,12 @@ const studentSchema = new mongoose.Schema({
       'Electrical Engineering',
       'Mechanical Engineering',
       'Civil Engineering',
-      'Chemical Engineering'
+      'Bio Technology',
+      'Food Technology',
+      'Agricultural Engineering',
+      'Artificial Intelligence and Data Science',
+      'Artificial Intelligence and Machine Learning',
+      'Data Science'
     ]
   },
   year: {
@@ -62,18 +67,34 @@ const studentSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  semesters: [],
-  projects: [],
-  achievements: [],
-  extraCourses: [],
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now
-  }
+}, {
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+// Virtual population for related collections
+studentSchema.virtual('semesters', {
+  ref: 'Semester',
+  localField: '_id',
+  foreignField: 'studentId'
+});
+
+studentSchema.virtual('projects', {
+  ref: 'Project',
+  localField: '_id',
+  foreignField: 'studentId'
+});
+
+studentSchema.virtual('achievements', {
+  ref: 'Achievement',
+  localField: '_id',
+  foreignField: 'studentId'
+});
+
+studentSchema.virtual('extraCourses', {
+  ref: 'ExtraCourse',
+  localField: '_id',
+  foreignField: 'studentId'
 });
 
 // Update the updatedAt field on save

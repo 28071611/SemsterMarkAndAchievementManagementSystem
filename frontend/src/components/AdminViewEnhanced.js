@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { LogOut, Search, Users, TrendingUp, BookOpen, Award, Download, Filter, ChevronDown, Eye, Edit, Trash2, Mail, Phone, Calendar, MapPin, GraduationCap, Code, Trophy, FileText, Activity, Database, Server, CheckCircle, AlertCircle, XCircle, RefreshCw, X } from 'lucide-react';
+import { LogOut, Search, Users, TrendingUp, BookOpen, Award, Download, Filter, ChevronDown, Eye, Edit, Trash2, Mail, Calendar, GraduationCap, Code, Trophy, FileText, Activity, Database, Server, CheckCircle, AlertCircle, RefreshCw, X } from 'lucide-react';
 import ThemeToggle from './ui/ThemeToggle';
 import { api } from '../services/api';
 
-const AdminView = ({ students, setView, adminToken }) => {
+const AdminView = ({ students, setStudents, setView, adminToken }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [filterBy, setFilterBy] = useState('all');
@@ -15,6 +15,8 @@ const AdminView = ({ students, setView, adminToken }) => {
   const [dbStatus, setDbStatus] = useState('connected');
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [selectedStudents, setSelectedStudents] = useState([]); // New state for bulk selection
+  const [isSearching, setIsSearching] = useState(false); // New state for search indicator
   const [semesters, setSemesters] = useState([]);
   const [projects, setProjects] = useState([]);
   const [courses, setCourses] = useState([]);
@@ -39,8 +41,6 @@ const AdminView = ({ students, setView, adminToken }) => {
 
   const fetchAllCollections = async () => {
     try {
-      console.log('🔍 Fetching all collections from API...');
-
       const [studentsRes, semestersRes, projectsRes, coursesRes, achievementsRes] = await Promise.all([
         api.getAllStudents(),
         api.getAllSemesters(),
@@ -48,13 +48,6 @@ const AdminView = ({ students, setView, adminToken }) => {
         api.getAllCourses(),
         api.getAllAchievements()
       ]);
-
-      console.log('📊 API Response Data:');
-      console.log('Students:', studentsRes);
-      console.log('Semesters:', semestersRes);
-      console.log('Projects:', projectsRes);
-      console.log('Courses:', coursesRes);
-      console.log('Achievements:', achievementsRes);
 
       setStudents(studentsRes || []);
       setSemesters(semestersRes || []);
@@ -310,6 +303,58 @@ const AdminView = ({ students, setView, adminToken }) => {
 
     return filtered;
   }, [students, searchTerm, sortBy, filterBy, selectedDepartment, selectedYear]);
+
+  // Handle advanced search via API
+  const handleAdvancedSearch = async () => {
+    setIsSearching(true);
+    try {
+      const params = {
+        q: searchTerm,
+        department: selectedDepartment !== 'all' ? selectedDepartment : '',
+        year: selectedYear !== 'all' ? selectedYear : '',
+        hasArrears: filterBy === 'arrears' ? 'true' : '',
+        minCgpa: filterBy === 'high' ? '8' : (filterBy === 'medium' ? '6' : '')
+      };
+      const results = await api.searchStudents(params);
+      setStudents(results);
+    } catch (error) {
+      console.error('Search failed:', error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Bulk Delete implementation
+  const handleBulkDelete = async () => {
+    if (selectedStudents.length === 0) return;
+    if (!window.confirm(`Are you sure you want to delete ${selectedStudents.length} students?`)) return;
+
+    try {
+      await api.bulkDeleteStudents(selectedStudents);
+      alert('Students deleted successfully');
+      setSelectedStudents([]);
+      fetchAllCollections();
+    } catch (error) {
+      console.error('Bulk delete failed:', error);
+      alert('Failed to delete students');
+    }
+  };
+
+  const toggleStudentSelection = (regNum) => {
+    setSelectedStudents(prev =>
+      prev.includes(regNum)
+        ? prev.filter(id => id !== regNum)
+        : [...prev, regNum]
+    );
+  };
+
+  const toggleAllSelection = () => {
+    if (selectedStudents.length === filteredStudents.length) {
+      setSelectedStudents([]);
+    } else {
+      setSelectedStudents(filteredStudents.map(s => s.registerNumber));
+    }
+  };
 
   const getPerformanceColor = (cgpa) => {
     if (cgpa >= 8) return 'text-green-600 dark:text-green-400';
@@ -603,6 +648,14 @@ const AdminView = ({ students, setView, adminToken }) => {
               <option value="department">Sort by Department</option>
               <option value="year">Sort by Year</option>
             </select>
+            <button
+              onClick={handleAdvancedSearch}
+              className="px-6 py-3 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-colors flex items-center gap-2"
+              disabled={isSearching}
+            >
+              <Search size={18} />
+              {isSearching ? 'Searching...' : 'Search'}
+            </button>
           </div>
 
           {showFilters && (
@@ -649,8 +702,25 @@ const AdminView = ({ students, setView, adminToken }) => {
 
         {/* Enhanced Student List */}
         <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg rounded-3xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
-          <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+          <div className="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
             <h2 className="text-xl font-black text-slate-800 dark:text-white">Student Records</h2>
+            <div className="flex items-center gap-4">
+              {selectedStudents.length > 0 && (
+                <button
+                  onClick={handleBulkDelete}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors"
+                >
+                  <Trash2 size={16} />
+                  Delete Selected ({selectedStudents.length})
+                </button>
+              )}
+              <button
+                onClick={toggleAllSelection}
+                className="text-sm text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
+              >
+                {selectedStudents.length === filteredStudents.length ? 'Deselect All' : 'Select All'}
+              </button>
+            </div>
           </div>
 
           {filteredStudents.length === 0 ? (
@@ -667,8 +737,14 @@ const AdminView = ({ students, setView, adminToken }) => {
           ) : (
             <div className="divide-y divide-slate-200 dark:divide-slate-700">
               {filteredStudents.map((student) => (
-                <div key={student._id} className="p-6 hover:bg-slate-50/50 dark:hover:bg-slate-700/50 transition-all">
-                  <div className="flex items-center justify-between">
+                <div key={student._id} className={`p-6 hover:bg-slate-50/50 dark:hover:bg-slate-700/50 transition-all ${selectedStudents.includes(student.registerNumber) ? 'bg-indigo-50/50 dark:bg-indigo-900/20' : ''}`}>
+                  <div className="flex items-center gap-4 mb-4 md:mb-0">
+                    <input
+                      type="checkbox"
+                      checked={selectedStudents.includes(student.registerNumber)}
+                      onChange={() => toggleStudentSelection(student.registerNumber)}
+                      className="w-5 h-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-4 mb-2">
                         <h3 className="text-lg font-bold text-slate-800 dark:text-white truncate">{student.name}</h3>
@@ -1197,11 +1273,6 @@ const AdminView = ({ students, setView, adminToken }) => {
                     <Code size={20} />
                     Student Projects
                   </h3>
-                  {/* Debug Info */}
-                  {console.log('=== PROJECTS DEBUG ===')}
-                  {console.log('All Projects:', projects)}
-                  {console.log('Selected Student:', selectedStudent)}
-                  {console.log('Selected Department:', selectedDepartment)}
                   {/* Department Filter */}
                   <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
                     <div className="flex items-center gap-4">
@@ -1234,13 +1305,6 @@ const AdminView = ({ students, setView, adminToken }) => {
                     if (selectedDepartment !== 'all' && selectedStudent.department !== selectedDepartment) {
                       return false;
                     }
-
-                    console.log(`Project ${p.name}:`, {
-                      studentMatch,
-                      projectStudentId: p.studentId,
-                      selectedRegNo: selectedStudent.registerNumber,
-                      selectedDept: selectedStudent.department
-                    });
 
                     return studentMatch;
                   }).map(project => (

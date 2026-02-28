@@ -11,7 +11,7 @@ import { api } from './services/api';
 import { ADMIN_CREDENTIALS } from './constants/constants';
 
 const AppContent = () => {
-  const [view, setView] = useState('landing'); 
+  const [view, setView] = useState('landing');
   const [students, setStudents] = useState([]);
   const [activeStudent, setActiveStudent] = useState(null);
   const [showAdminLock, setShowAdminLock] = useState(false);
@@ -70,37 +70,31 @@ const AppContent = () => {
   const handleAdminLogin = async () => {
     console.log('Login attempt:', { adminUsername, adminPassword });
     console.log('Expected credentials:', ADMIN_CREDENTIALS);
-    
+
     if (adminUsername.trim() === ADMIN_CREDENTIALS.username && adminPassword.trim() === ADMIN_CREDENTIALS.password) {
       setLoading(true);
       try {
         // Simulate admin authentication
         const token = 'admin-token-' + Date.now();
         setAdminToken(token);
-        
+
         // Fetch all collections data
         try {
-          const [allStudents, allSemesters, allProjects, allCourses, allAchievements] = await Promise.all([
+          const [allStudents] = await Promise.all([
             api.getAllStudents(token),
             api.getAllSemesters(token),
             api.getAllProjects(token),
             api.getAllCourses(token),
             api.getAllAchievements(token)
           ]);
-          
+
           setStudents(allStudents);
-          console.log('Fetched data:', {
-            students: allStudents.length,
-            semesters: allSemesters.length,
-            projects: allProjects.length,
-            courses: allCourses.length,
-            achievements: allAchievements.length
-          });
+          console.log('Fetched students:', allStudents.length);
         } catch (studentError) {
           console.warn('Could not fetch data from backend, using empty arrays');
           setStudents([]);
         }
-        
+
         setView('admin');
         setShowAdminLock(false);
         setPassError(false);
@@ -155,16 +149,16 @@ const AppContent = () => {
     );
   }
 
-  switch(view) {
-    case 'admin': 
-      return <AdminView students={students} setView={setView} adminToken={adminToken} />;
-    case 'student-login': 
+  switch (view) {
+    case 'admin':
+      return <AdminView students={students} setStudents={setStudents} setView={setView} adminToken={adminToken} />;
+    case 'student-login':
       return <StudentLogin onLogin={handleStudentLogin} loading={loading} />;
-    case 'student-signup': 
+    case 'student-signup':
       return <StudentSignup onSignup={handleStudentSignup} onBackToLogin={() => setView('student-login')} loading={loading} />;
-    case 'student': 
+    case 'student':
       return (
-        <StudentPortal 
+        <StudentPortal
           activeStudent={activeStudent}
           setActiveStudent={setActiveStudent}
           setView={setView}
@@ -174,9 +168,9 @@ const AppContent = () => {
           adminToken={adminToken}
         />
       );
-    default: 
+    default:
       return (
-        <LandingPage 
+        <LandingPage
           setView={setView}
           showAdminLock={showAdminLock}
           setShowAdminLock={setShowAdminLock}

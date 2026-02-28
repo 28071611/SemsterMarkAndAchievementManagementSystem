@@ -21,6 +21,82 @@ router.get("/", async (req, res) => {
 });
 
 /**
+ * GET dashboard statistics (Admin only)
+ */
+router.get("/stats", async (req, res) => {
+  try {
+    const totalStudents = await Student.countDocuments();
+    const stats = await Student.aggregate([
+      {
+        $group: {
+          _id: null,
+          avgCgpa: { $avg: "$cgpa" },
+          totalArrears: { $sum: "$arrears" },
+          deptDistribution: { $push: "$department" }
+        }
+      }
+    ]);
+
+    const deptCounts = await Student.aggregate([
+      { $group: { _id: "$department", count: { $sum: 1 } } }
+    ]);
+
+    res.json({
+      totalStudents,
+      avgCgpa: stats[0]?.avgCgpa || 0,
+      totalArrears: stats[0]?.totalArrears || 0,
+      departmentDistribution: deptCounts
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch dashboard statistics" });
+  }
+});
+
+/**
+ * GET search students with filters
+ */
+router.get("/search", async (req, res) => {
+  try {
+    const { q, department, year, hasArrears, minCgpa } = req.query;
+    let query = {};
+
+    if (q) {
+      query.$or = [
+        { name: { $regex: q, $options: "i" } },
+        { registerNumber: { $regex: q, $options: "i" } }
+      ];
+    }
+
+    if (department) query.department = department;
+    if (year) query.year = year;
+    if (hasArrears === 'true') query.arrears = { $gt: 0 };
+    if (minCgpa) query.cgpa = { $gte: parseFloat(minCgpa) };
+
+    const students = await Student.find(query);
+    res.json(students);
+  } catch (err) {
+    res.status(500).json({ error: "Search failed" });
+  }
+});
+
+/**
+ * POST bulk-delete students (Admin only)
+ */
+router.post("/bulk-delete", async (req, res) => {
+  try {
+    const { registerNumbers } = req.body;
+    if (!Array.isArray(registerNumbers) || registerNumbers.length === 0) {
+      return res.status(400).json({ error: "Invalid register numbers list" });
+    }
+
+    await Student.deleteMany({ registerNumber: { $in: registerNumbers } });
+    res.json({ message: `Successfully deleted ${registerNumbers.length} students` });
+  } catch (err) {
+    res.status(500).json({ error: "Bulk delete failed" });
+  }
+});
+
+/**
  * GET student by register number with all related data
  */
 router.get("/:registerNumber", async (req, res) => {
@@ -61,7 +137,7 @@ router.post("/", async (req, res) => {
     const { name, registerNumber, email, phone, department, year, currentSemester } = req.body;
 
     let student = await Student.findOne({ registerNumber });
-    
+
     if (!student) {
       // Check if email already exists
       if (email) {
@@ -70,7 +146,7 @@ router.post("/", async (req, res) => {
           return res.status(400).json({ error: "Email already registered" });
         }
       }
-      
+
       student = new Student({
         name,
         registerNumber,
@@ -89,7 +165,7 @@ router.post("/", async (req, res) => {
       if (year && !student.year) student.year = year;
       if (currentSemester && !student.currentSemester) student.currentSemester = parseInt(currentSemester);
     }
-    
+
     await student.save();
     res.json(student);
   } catch (err) {
@@ -109,17 +185,17 @@ router.post("/", async (req, res) => {
 router.put("/:registerNumber", async (req, res) => {
   try {
     const { name, email, phone, department, year } = req.body;
-    
+
     const student = await Student.findOneAndUpdate(
       { registerNumber: req.params.registerNumber },
       { name, email, phone, department, year },
       { new: true, runValidators: true }
     );
-    
+
     if (!student) {
       return res.status(404).json({ error: "Student not found" });
     }
-    
+
     res.json(student);
   } catch (err) {
     console.error('Error updating student:', err);
@@ -145,7 +221,7 @@ router.post("/register", async (req, res) => {
         { email }
       ]
     });
-    
+
     if (existingStudent) {
       if (existingStudent.registerNumber === registerNumber) {
         return res.status(400).json({ error: "Register number already registered" });
@@ -154,7 +230,7 @@ router.post("/register", async (req, res) => {
         return res.status(400).json({ error: "Email already registered" });
       }
     }
-    
+
     const student = new Student({
       name,
       registerNumber,
@@ -165,7 +241,7 @@ router.post("/register", async (req, res) => {
       currentSemester: parseInt(currentSemester) || 1,
       cgpa: 0
     });
-    
+
     await student.save();
     res.status(201).json(student);
   } catch (err) {
