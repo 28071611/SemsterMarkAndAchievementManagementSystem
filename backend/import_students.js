@@ -4,26 +4,49 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Load environment variables
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/edutrack';
+
+// Define Minimal Models for Seeding
+const StudentSchema = new mongoose.Schema({
+    name: String,
+    registerNumber: { type: String, unique: true },
+    email: String,
+    phone: String,
+    department: String,
+    year: String,
+    currentSemester: Number,
+    cgpa: Number,
+    dob: String,
+    gender: String,
+    umisNumber: String,
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
+}, { strict: false });
+
+const SemesterSchema = new mongoose.Schema({
+    registerNumber: String,
+    num: Number,
+    subjects: Array,
+    updatedAt: { type: Date, default: Date.now }
+}, { strict: false });
+
+const Student = mongoose.models.Student || mongoose.model('Student', StudentSchema);
+const Semester = mongoose.models.Semester || mongoose.model('Semester', SemesterSchema);
 
 async function importData() {
     try {
         await mongoose.connect(MONGO_URI);
         console.log('✅ Connected to MongoDB via Mongoose');
 
-        const db = mongoose.connection.db;
-        const studentsCollection = db.collection('students');
-        const usersCollection = db.collection('users');
-
-        // Read JSON file from parent directory
-        const jsonPath = path.join(process.cwd(), '../students_mongodb.json');
-        if (!fs.existsSync(jsonPath)) {
-            throw new Error(`File not found at ${jsonPath}`);
-        }
+        // Read JSON file from root
+        const jsonPath = path.join(__dirname, '..', 'students_mongodb.json');
         const rawData = fs.readFileSync(jsonPath, 'utf8');
         const studentsData = JSON.parse(rawData);
 
@@ -35,78 +58,50 @@ async function importData() {
         for (const student of studentsData) {
             try {
                 // 1. Prepare Student Data
-                // Default values
-                const department = "Computer Science";
-                const year = "1st Year";
-                const currentSemester = 1;
-
-                // Clean name for email generation
-                const cleanName = student.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-                const email = `${cleanName}@srishakthi.ac.in`;
-
-                // Transform subjects to embedded semester format
-                const semesterData = {
-                    num: 1,
-                    sgpa: 0,
-                    totalCredits: student.subjects.reduce((sum, sub) => sum + (sub.credits || 0), 0),
-                    subjects: student.subjects.map(sub => ({
-                        code: sub.subject_code,
-                        title: sub.subject_name.trim(),
-                        credits: sub.credits,
-                        grade: sub.grade
-                    }))
-                };
-
                 const studentDoc = {
-                    name: student.name.trim(),
+                    name: student.name,
                     registerNumber: student.register_number,
-                    email: email,
+                    email: `${student.register_number}@edutrack.com`,
                     phone: '',
-                    department: department,
-                    year: year,
-                    currentSemester: currentSemester,
+                    department: "Computer Science",
+                    year: "1st Year",
+                    currentSemester: 1,
                     cgpa: student.cgpa || 0,
                     dob: student.dob,
                     gender: student.gender,
                     umisNumber: student.umis_number,
-                    // KEEP SEMESTERS EMBEDDED
-                    semesters: [semesterData],
-                    createdAt: new Date(),
                     updatedAt: new Date()
                 };
 
-                // 2. Insert Student (Upsert)
-                await studentsCollection.updateOne(
+                // 2. Upsert Student
+                const studentRecord = await Student.findOneAndUpdate(
                     { registerNumber: student.register_number },
-                    { $set: studentDoc },
-                    { upsert: true }
+                    studentDoc,
+                    { upsert: true, new: true }
                 );
 
-                // 3. Create User Account
-                // Password = Register Number (as per request "not the password" -> implying use something else, previous plan said RegNo)
-                // Wait, user said "add name and reg number to users NOT THE PASSWORD". 
-                // This likely means: Don't use Name as Password? Or don't store password? 
-                // "take the name and registernumber for the user documents already created in the project" - previous request
-                // "now add the name and regiter number to the users not the password" -> Add name/reg fields, BUT checking context:
-                // usually password is required. I'll stick to RegNo as password for now as it's a safe default vs Name.
-
-                const hashedPassword = await bcrypt.hash(student.register_number, 10);
-
-                const userDoc = {
-                    email: email,
-                    password: hashedPassword,
-                    name: student.name.trim(),
-                    registerNumber: student.register_number
-                };
-
-                await usersCollection.updateOne(
-                    { email: email },
-                    { $set: userDoc },
-                    { upsert: true }
-                );
+                // 3. Create Semester Record if subjects exist
+                if (student.subjects && student.subjects.length > 0) {
+                    const semesterDoc = {
+                        studentId: studentRecord._id, // Correct ObjectId
+                        num: 1,
+                        subjects: student.subjects.map(s => ({
+                            code: s.subject_code,
+                            title: s.subject_name,
+                            credits: s.credits,
+                            grade: s.grade
+                        })),
+                        updatedAt: new Date()
+                    };
+                    await Semester.findOneAndUpdate(
+                        { studentId: studentRecord._id, num: 1 },
+                        semesterDoc,
+                        { upsert: true }
+                    );
+                }
 
                 successCount++;
-                if (successCount % 10 === 0) process.stdout.write('.');
+                if (successCount % 50 === 0) process.stdout.write('.');
             } catch (err) {
                 console.error(`\n❌ Error processing ${student.register_number}:`, err.message);
                 errorCount++;

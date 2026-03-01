@@ -12,6 +12,7 @@
         "heroku-postbuild": "npm run build"
     },
     "devDependencies": {
-        "concurrently": "^8.2.2"
+        "concurrently": "^8.2.2",
+        "firebase-tools": "^15.8.0"
     }
 }

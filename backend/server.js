@@ -21,17 +21,22 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
 // Middlewares
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://edutrack-38472.web.app",
-  "https://edutrack-38472.firebaseapp.com"
+  "http://localhost:5173",
+  'https://edutrack-7063e.web.app',
+  'https://edutrack-7063e.firebaseapp.com',
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
+
+    const isAllowed = allowedOrigins.includes(origin) ||
+      origin.endsWith('.web.app') ||
+      origin.endsWith('.firebaseapp.com');
+
+    if (!isAllowed) {
+      console.log('Origin denied by CORS:', origin);
+      return callback(new Error('CORS blocked'), false);
     }
     return callback(null, true);
   },
@@ -94,15 +99,24 @@ if (isProduction) {
   });
 }
 
+// Test route
+app.get("/api/test", (req, res) => {
+  res.json({
+    status: "EduTrack API Running",
+    database: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected",
+    env: process.env.NODE_ENV || 'development'
+  });
+});
+
 // DB + Server
+const PORT = process.env.PORT || 5000;
+
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("✅ MongoDB Connected");
-    app.listen(process.env.PORT, '0.0.0.0', () => {
-      console.log(`🚀 Server running on port ${process.env.PORT}`);
-      console.log(`🌐 Local access: http://localhost:${process.env.PORT}`);
-      console.log(`🌐 Network access: http://0.0.0.0:${process.env.PORT}`);
-    });
-  })
+  .then(() => console.log("✅ MongoDB Connected"))
   .catch((err) => console.error("❌ DB Error:", err));
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🌐 Local access: http://localhost:${PORT}`);
+});

@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://edutrack-38472.web.app/sitemap.xml
+Sitemap: https://edutrack-7063e.web.app/sitemap.xml

@@ -27,19 +27,40 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "User not found" });
+    // 1. Try regular User collection
+    let user = await User.findOne({ email });
 
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(400).json({ message: "Invalid password" });
+    if (user) {
+      const match = await bcrypt.compare(password, user.password);
+      if (!match) return res.status(400).json({ message: "Invalid password" });
 
-    const token = jwt.sign(
-      { id: user._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
+      const token = jwt.sign(
+        { id: user._id },
+        process.env.JWT_SECRET,
+        { expiresIn: "24h" }
+      );
+      return res.json({ token, role: 'user' });
+    }
 
-    res.json({ token });
+    // 2. Fallback to Student collection (Register Number as login)
+    const Student = mongoose.model("Student");
+    const student = await Student.findOne({ registerNumber: email });
+
+    if (student) {
+      // Allow login if password matches registerNumber (simplest for 250 students)
+      if (password === student.registerNumber) {
+        const token = jwt.sign(
+          { id: student._id, isStudent: true },
+          process.env.JWT_SECRET,
+          { expiresIn: "24h" }
+        );
+        return res.json({ token, role: 'student', studentId: student._id });
+      }
+
+      return res.status(400).json({ message: "Invalid password for student" });
+    }
+
+    return res.status(400).json({ message: "User or Student not found" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

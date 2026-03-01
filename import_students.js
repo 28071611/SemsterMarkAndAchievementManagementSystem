@@ -33,65 +33,55 @@ async function importData() {
 
         for (const student of studentsData) {
             try {
-                // 1. Prepare Student Data with embedded Semester (for later migration)
-                // Default values for missing fields
-                const department = "Computer Science";
-                const year = "1st Year";
-                const currentSemester = 1;
-
-                // Transform subjects to embedded semester format matching create_student.js
-                const semesterData = {
-                    num: 1,
-                    sgpa: 0, // Calculate if needed, else 0
-                    totalCredits: student.subjects.reduce((sum, sub) => sum + (sub.credits || 0), 0),
-                    subjects: student.subjects.map(sub => ({
-                        code: sub.subject_code,
-                        title: sub.subject_name,
-                        credits: sub.credits,
-                        grade: sub.grade
-                    }))
-                };
-
+                // 1. Prepare Student Data
                 const studentDoc = {
                     name: student.name,
-                    registerNumber: student.register_number,
-                    email: `${student.register_number}@edutrack.com`, // Placeholder email
+                    registerNumber: student.register_number, // Mapped from register_number
+                    email: `${student.register_number}@edutrack.com`,
                     phone: '',
-                    department: department,
-                    year: year,
-                    currentSemester: currentSemester,
+                    department: "Computer Science", // Default
+                    year: "1st Year", // Default
+                    currentSemester: 1,
                     cgpa: student.cgpa || 0,
                     dob: student.dob,
                     gender: student.gender,
                     umisNumber: student.umis_number,
-                    // EMBEDDED SEMESTERS for migration script to handle
-                    semesters: [semesterData],
                     createdAt: new Date(),
                     updatedAt: new Date()
                 };
 
-                // 2. Insert Student (Upsert to avoid duplicates)
+                // 2. Insert Student (Upsert)
                 await studentsCollection.updateOne(
                     { registerNumber: student.register_number },
                     { $set: studentDoc },
                     { upsert: true }
                 );
 
-                // 3. Create User Account (RegNo = Email, Name = Password)
-                const hashedPassword = await bcrypt.hash(student.name, 10);
-                const userDoc = {
-                    email: student.register_number, // User Login ID
-                    password: hashedPassword
-                };
+                // 3. Create Semester Record if subjects exist
+                if (student.subjects && student.subjects.length > 0) {
+                    const semesterDoc = {
+                        registerNumber: student.register_number,
+                        num: 1,
+                        subjects: student.subjects.map(s => ({
+                            code: s.subject_code,
+                            title: s.subject_name,
+                            credits: s.credits,
+                            grade: s.grade
+                        })),
+                        updatedAt: new Date()
+                    };
+                    await db.collection('semesters').updateOne(
+                        { registerNumber: student.register_number, num: 1 },
+                        { $set: semesterDoc },
+                        { upsert: true }
+                    );
+                }
 
-                await usersCollection.updateOne(
-                    { email: student.register_number },
-                    { $set: userDoc },
-                    { upsert: true }
-                );
+                // 4. Skip User collection as per "no other data" request
+                // Login will work via fallback in authRoutes.js using student.registerNumber
 
                 successCount++;
-                if (successCount % 10 === 0) process.stdout.write('.');
+                if (successCount % 100 === 0) process.stdout.write('.');
             } catch (err) {
                 console.error(`\n❌ Error processing ${student.register_number}:`, err.message);
                 errorCount++;

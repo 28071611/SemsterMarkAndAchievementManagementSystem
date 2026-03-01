@@ -193,7 +193,7 @@ docker-compose -f docker-compose-new.yml up -d
 **EduTrack is now fully deployed and ready for production use!**
 
 ### **🌐 Live URLs:**
-- **Application**: https://edutrack-38472.web.app
+- **Application**: https://edutrack-7063e.web.app/
 - **API Documentation**: https://edutrack-api.onrender.com/api
 
 ### **📞 Support:**

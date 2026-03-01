@@ -4,7 +4,7 @@
 
 ### **🚀 Primary Deployment (Recommended)**
 ```
-Frontend: https://edutrack-38472.web.app
+Frontend: https://edutrack-7063e.web.app/
 Backend:  https://edutrack-api.onrender.com
 API:      https://edutrack-api.onrender.com/api
 ```
