@@ -19,44 +19,32 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
 }));
 
 // Middlewares
-const allowedOrigins = [
-  "http://localhost:3000",
-  "http://localhost:5173",
-  'https://edutrack-7063e.web.app',
-  'https://edutrack-7063e.firebaseapp.com',
-];
-
 app.use(cors({
-  origin: true, // Reflect origin in Access-Control-Allow-Origin
+  origin: '*', // Most permissive for debugging, change to specific domains after verification
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// Robust preflight handler
-app.options("*", cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Performance headers
-app.use((req, res, next) => {
-  res.setHeader('Cache-Control', 'public, max-age=300');
-  res.setHeader('Connection', 'keep-alive');
-  next();
+// Health Check
+app.get("/api/test", (req, res) => {
+  res.json({
+    status: "EduTrack API v1.0.2 Running",
+    database: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected",
+    env: process.env.NODE_ENV || 'production'
+  });
 });
 
+// Routes
 app.use("/api/semesters", semesterRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/achievements", achievementRoutes);
-// Routes
 app.use("/api/students", studentRoutes);
 app.use("/api/auth", authRoutes);
-
-// Test route
-app.get("/api/test", (req, res) => {
-  res.send("EduTrack API v1.0.1 Running");
-});
 
 // Debug DB route
 app.get("/api/debug-db", async (req, res) => {
@@ -76,51 +64,23 @@ app.get("/api/debug-db", async (req, res) => {
 });
 
 import fs from 'fs';
-
-// Serve frontend static files
 const __dirname = path.resolve();
 const buildPath = path.join(__dirname, 'build');
-
-// Detection for production (Render sets RENDER=true or NODE_ENV=production)
 const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
 
 if (isProduction) {
-  console.log(`🚀 Production Mode: Serving static files from ${buildPath}`);
-
   if (fs.existsSync(buildPath)) {
     app.use(express.static(buildPath));
-
     app.get('*', (req, res) => {
       if (!req.path.startsWith('/api/') && !req.path.startsWith('/uploads/')) {
         res.sendFile(path.join(buildPath, 'index.html'));
       }
     });
-  } else {
-    console.error(`❌ Build folder NOT found at ${buildPath}`);
-    app.get('*', (req, res) => {
-      if (!req.path.startsWith('/api/')) {
-        res.status(500).send("Server Error: Frontend build folder missing. Please check deployment logs.");
-      }
-    });
   }
-} else {
-  app.get("/", (req, res) => {
-    res.send("EduTrack API is running (Development Mode).");
-  });
 }
-
-// Test route
-app.get("/api/test", (req, res) => {
-  res.json({
-    status: "EduTrack API Running",
-    database: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected",
-    env: process.env.NODE_ENV || 'development'
-  });
-});
 
 // DB + Server
 const PORT = process.env.PORT || 5000;
-
 const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://harishpblr2007_db_user:Harish2807@cluster0.yaga33w.mongodb.net/edutrack?appName=Cluster0';
 
 mongoose
@@ -130,5 +90,4 @@ mongoose
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌐 Local access: http://localhost:${PORT}`);
 });
