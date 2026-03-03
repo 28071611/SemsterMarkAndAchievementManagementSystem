@@ -41,28 +41,30 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 app.get("/", async (req, res) => {
   try {
-    const studentCount = await mongoose.connection.db.collection('students').countDocuments();
-    res.send(`<h1>EduTrack Backend v1.0.5</h1><p>Database: ${mongoose.connection.db.databaseName}</p><p>Students: ${studentCount}</p>`);
+    const isConn = mongoose.connection.readyState === 1;
+    const dbName = isConn ? mongoose.connection.db.databaseName : "Connecting...";
+    const count = isConn ? await mongoose.connection.db.collection('students').countDocuments() : 0;
+    res.send(`<h1>EduTrack Backend v1.0.6</h1><p>Database: ${dbName}</p><p>Students: ${count}</p><p>Status: ${isConn ? 'Connected' : 'Connecting'}</p>`);
   } catch (e) {
-    res.send(`<h1>EduTrack Backend v1.0.5</h1><p>DB Error: ${e.message}</p>`);
+    res.send(`<h1>EduTrack Backend v1.0.6</h1><p>Status: Error</p><p>Error: ${e.message}</p>`);
   }
 });
 
 // Health Check
 app.get("/api/test", async (req, res) => {
   try {
-    const dbStatus = mongoose.connection.readyState === 1 ? "Connected" : "Disconnected";
+    const isConn = mongoose.connection.readyState === 1;
     let studentCount = 0;
 
-    if (dbStatus === "Connected") {
+    if (isConn) {
       studentCount = await mongoose.connection.db.collection('students').countDocuments();
     }
 
     res.json({
-      status: "EduTrack API v1.0.5 Running",
-      database: dbStatus,
+      status: "EduTrack API v1.0.6 Running",
+      database: isConn ? "Connected" : "Disconnected",
       studentCount,
-      dbName: mongoose.connection.db?.databaseName || "Connecting...",
+      dbName: isConn ? mongoose.connection.db.databaseName : "Connecting...",
       env: process.env.NODE_ENV
     });
   } catch (err) {
