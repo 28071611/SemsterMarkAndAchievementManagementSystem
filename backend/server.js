@@ -27,21 +27,14 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-
-    const isAllowed = allowedOrigins.includes(origin) ||
-      origin.endsWith('.web.app') ||
-      origin.endsWith('.firebaseapp.com');
-
-    if (!isAllowed) {
-      console.log('Origin denied by CORS:', origin);
-      return callback(new Error('CORS blocked'), false);
-    }
-    return callback(null, true);
-  },
-  credentials: true
+  origin: true, // Reflect origin in Access-Control-Allow-Origin
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
+
+// Robust preflight handler
+app.options("*", cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
