@@ -1,7 +1,7 @@
 // Test Your MongoDB Atlas Connection
 import mongoose from 'mongoose';
 
-const ATLAS_CONNECTION_STRING = 'mongodb+srv://harishpblr2007_db_user:YOUR_PASSWORD@cluster0.yaga33w.mongodb.net/edutrack?appName=Cluster0';
+const ATLAS_CONNECTION_STRING = 'mongodb+srv://harishpblr2007_db_user:Harish2807@cluster0.yaga33w.mongodb.net/edutrack?appName=Cluster0';
 
 console.log('🧪 Testing Your MongoDB Atlas Connection...');
 console.log('==========================================');
@@ -17,24 +17,24 @@ async function testConnection() {
     try {
         await mongoose.connect(ATLAS_CONNECTION_STRING);
         console.log('✅ Successfully connected to MongoDB Atlas!');
-        
+
         const db = mongoose.connection.db;
-        
+
         // List collections
         const collections = await db.listCollections().toArray();
         console.log(`📊 Found ${collections.length} collections:`, collections.map(c => c.name));
-        
+
         // Check students count
         const studentsCount = await db.collection('students').countDocuments();
         console.log(`👥 Students in database: ${studentsCount}`);
-        
+
         if (studentsCount === 0) {
             console.log('📥 Database is empty. Ready to import student data!');
         }
-        
+
         await mongoose.disconnect();
         console.log('🔌 Disconnected successfully');
-        
+
     } catch (error) {
         console.error('❌ Connection failed:', error.message);
         console.log('💡 Possible solutions:');

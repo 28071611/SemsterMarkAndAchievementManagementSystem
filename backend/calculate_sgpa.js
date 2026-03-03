@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
 // Load environment variables (hardcoded fallback)
-const MONGO_URI = 'mongodb://localhost:27017/edutrack';
+const MONGO_URI = 'mongodb+srv://harishpblr2007_db_user:Harish2807@cluster0.yaga33w.mongodb.net/edutrack?appName=Cluster0';
 
 async function calculateSGPA() {
     try {

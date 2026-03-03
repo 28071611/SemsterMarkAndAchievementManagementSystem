@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import fs from 'fs';
 import path from 'path';
 
-const ATLAS_CONNECTION_STRING = 'mongodb+srv://harishpblr2007_db_user:YOUR_PASSWORD@cluster0.yaga33w.mongodb.net/edutrack?appName=Cluster0';
+const ATLAS_CONNECTION_STRING = 'mongodb+srv://harishpblr2007_db_user:Harish2807@cluster0.yaga33w.mongodb.net/edutrack?appName=Cluster0';
 
 console.log('📥 Importing Student Data to MongoDB Atlas...');
 console.log('==========================================');
@@ -18,23 +18,23 @@ async function importToAtlas() {
     try {
         await mongoose.connect(ATLAS_CONNECTION_STRING);
         console.log('✅ Connected to MongoDB Atlas');
-        
+
         const db = mongoose.connection.db;
-        
+
         // Read student data
-        const studentsPath = path.join(process.cwd(), 'students_mongodb.json');
+        const studentsPath = path.join(process.cwd(), '..', 'students_mongodb.json');
         const studentsData = JSON.parse(fs.readFileSync(studentsPath, 'utf8'));
-        
+
         console.log(`📊 Found ${studentsData.length} students to import`);
-        
+
         // Clear existing data
         await db.collection('students').deleteMany({});
         await db.collection('semesters').deleteMany({});
         console.log('🧹 Cleared existing data');
-        
+
         let importedStudents = 0;
         let importedSemesters = 0;
-        
+
         // Import students and semesters
         for (const student of studentsData) {
             // Import student
@@ -52,39 +52,43 @@ async function importToAtlas() {
                 umisNumber: student.umis_number,
                 arrears: student.arrears || 0
             };
-            
+
             const studentResult = await db.collection('students').insertOne(studentDoc);
             const studentId = studentResult.insertedId;
-            
-            // Import semesters
-            if (student.semesters && Array.isArray(student.semesters)) {
-                for (const semester of student.semesters) {
-                    const semesterDoc = {
-                        studentId: studentId,
-                        num: semester.semester,
-                        sgpa: 0, // Will be calculated
-                        totalCredits: 0,
-                        subjects: semester.subjects || []
-                    };
-                    
-                    await db.collection('semesters').insertOne(semesterDoc);
-                    importedSemesters++;
-                }
+
+            // Import semesters from subjects field
+            if (student.subjects && Array.isArray(student.subjects)) {
+                const semesterDoc = {
+                    studentId: studentId,
+                    num: 1, // Default to semester 1
+                    sgpa: 0,
+                    totalCredits: 0,
+                    subjects: student.subjects.map(s => ({
+                        code: s.subject_code,
+                        title: s.subject_name,
+                        credits: s.credits,
+                        grade: s.grade,
+                        points: s.points
+                    }))
+                };
+
+                await db.collection('semesters').insertOne(semesterDoc);
+                importedSemesters++;
             }
-            
+
             importedStudents++;
             if (importedStudents % 50 === 0) {
                 console.log(`📥 Imported ${importedStudents} students...`);
             }
         }
-        
+
         console.log(`✅ Import completed!`);
         console.log(`👥 Students imported: ${importedStudents}`);
         console.log(`📚 Semesters imported: ${importedSemesters}`);
-        
+
         await mongoose.disconnect();
         console.log('🔌 Disconnected from Atlas');
-        
+
     } catch (error) {
         console.error('❌ Import failed:', error.message);
         await mongoose.disconnect();
