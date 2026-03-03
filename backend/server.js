@@ -55,7 +55,7 @@ app.use("/api/auth", authRoutes);
 
 // Test route
 app.get("/api/test", (req, res) => {
-  res.send("EduTrack API Running");
+  res.send("EduTrack API v1.0.1 Running");
 });
 
 // Debug DB route
