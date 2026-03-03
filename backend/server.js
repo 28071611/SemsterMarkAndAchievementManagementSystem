@@ -65,6 +65,23 @@ app.get("/api/test", (req, res) => {
   res.send("EduTrack API Running");
 });
 
+// Debug DB route
+app.get("/api/debug-db", async (req, res) => {
+  try {
+    const counts = {
+      students: await mongoose.connection.db.collection('students').countDocuments(),
+      semesters: await mongoose.connection.db.collection('semesters').countDocuments(),
+      projects: await mongoose.connection.db.collection('projects').countDocuments(),
+      achievements: await mongoose.connection.db.collection('achievements').countDocuments(),
+      dbName: mongoose.connection.db.databaseName,
+      status: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
+    };
+    res.json(counts);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 import fs from 'fs';
 
 // Serve frontend static files

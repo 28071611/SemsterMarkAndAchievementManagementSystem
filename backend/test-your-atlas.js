@@ -24,12 +24,11 @@ async function testConnection() {
         const collections = await db.listCollections().toArray();
         console.log(`📊 Found ${collections.length} collections:`, collections.map(c => c.name));
 
-        // Check students count
-        const studentsCount = await db.collection('students').countDocuments();
-        console.log(`👥 Students in database: ${studentsCount}`);
-
-        if (studentsCount === 0) {
-            console.log('📥 Database is empty. Ready to import student data!');
+        // Check counts for all collections
+        const collectionsToCheck = ['students', 'semesters', 'projects', 'extracourses', 'achievements'];
+        for (const coll of collectionsToCheck) {
+            const count = await db.collection(coll).countDocuments();
+            console.log(`📊 Collection '${coll}': ${count} documents`);
         }
 
         await mongoose.disconnect();
