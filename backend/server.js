@@ -39,8 +39,13 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-app.get("/", (req, res) => {
-  res.send("EduTrack Backend v1.0.4 Alive");
+app.get("/", async (req, res) => {
+  try {
+    const studentCount = await mongoose.connection.db.collection('students').countDocuments();
+    res.send(`<h1>EduTrack Backend v1.0.5</h1><p>Database: ${mongoose.connection.db.databaseName}</p><p>Students: ${studentCount}</p>`);
+  } catch (e) {
+    res.send(`<h1>EduTrack Backend v1.0.5</h1><p>DB Error: ${e.message}</p>`);
+  }
 });
 
 // Health Check
@@ -54,18 +59,14 @@ app.get("/api/test", async (req, res) => {
     }
 
     res.json({
-      status: "EduTrack API v1.0.3 Running",
+      status: "EduTrack API v1.0.5 Running",
       database: dbStatus,
       studentCount,
-      dbName,
-      env: process.env.NODE_ENV || 'production'
+      dbName: mongoose.connection.db?.databaseName || "Connecting...",
+      env: process.env.NODE_ENV
     });
   } catch (err) {
-    res.json({
-      status: "EduTrack API v1.0.3 Error",
-      error: err.message,
-      database: mongoose.connection.readyState === 1 ? "Connected" : "Disconnected"
-    });
+    res.json({ status: "Error", error: err.message });
   }
 });
 
