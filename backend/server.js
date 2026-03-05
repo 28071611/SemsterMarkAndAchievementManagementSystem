@@ -39,7 +39,8 @@ app.get("/api/test", async (req, res) => {
       studentCount = await mongoose.connection.db.collection('students').countDocuments();
     }
     res.json({
-      status: "EduTrack API v1.0.7 Online",
+      status: "EduTrack API v1.0.8 Online",
+      deployedAt: "2026-03-05T06:38:00Z",
       database: isConn ? "Connected" : "Disconnected",
       dbName: isConn ? mongoose.connection.db.databaseName : "Checking...",
       students: studentCount,
