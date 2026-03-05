@@ -14,7 +14,13 @@ dotenv.config();
 
 const app = express();
 
-// Manual CORS - Ultra Permissive for Firebase
+// v1.0.11 Super Priority Route
+app.get("/api/v1011-check", (req, res) => res.json({
+  status: "v1.0.11 ACTIVE",
+  timestamp: new Date().toISOString()
+}));
+
+// Manual CORS
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
