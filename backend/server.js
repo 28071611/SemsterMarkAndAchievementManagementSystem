@@ -14,47 +14,37 @@ dotenv.config();
 
 const app = express();
 
-// v1.0.11 Super Priority Route
-app.get("/api/v1011-check", (req, res) => res.json({
-  status: "v1.0.11 ACTIVE",
-  timestamp: new Date().toISOString()
+// v1.0.12 FLASH SYNC (Priority #1)
+app.get("/api/v1012-check", (req, res) => res.json({
+  status: "v1.0.12 ACTIVE",
+  deployedAt: new Date().toISOString()
 }));
 
-// Manual CORS
+// Manual CORS - Ultra Permissive
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
-
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
+  if (req.method === "OPTIONS") return res.status(200).end();
   next();
 });
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Health Check & Version Discovery
+// Health Check
 app.get("/api/test", async (req, res) => {
   try {
     const isConn = mongoose.connection.readyState === 1;
     const studentCount = isConn ? await mongoose.connection.db.collection('students').countDocuments() : 0;
     res.json({
-      status: "EduTrack API v1.0.9 Online",
-      deployedAt: new Date().toISOString(),
+      status: "EduTrack API v1.0.12 Online",
       database: isConn ? "Connected" : "Disconnected",
-      dbName: isConn ? mongoose.connection.db.databaseName : "Checking...",
       students: studentCount
     });
   } catch (err) {
-    res.status(503).json({ status: "Maintenance", error: err.message });
+    res.status(503).json({ error: err.message });
   }
-});
-
-// Unique Check for v1.0.9
-app.get("/api/v109-check", (req, res) => {
-  res.json({ message: "v1.0.9 is officially LIVE on Render", timestamp: "2026-03-05T06:45:00Z" });
 });
 
 // API Routes
@@ -67,7 +57,7 @@ app.use("/api/achievements", achievementRoutes);
 
 // Root Fallback
 app.get("/", (req, res) => {
-  res.send(`<h1>EduTrack API v1.0.9</h1><p>Status: Active</p><p>Backend is operational. Please use the <a href="https://edutrack-7063e.web.app">Frontend Dashboard</a>.</p>`);
+  res.send(`<h1>EduTrack API v1.0.12</h1><p>Status: Active</p><p>Backend is operational. Use <a href="https://edutrack-38472.web.app/">Frontend</a></p>`);
 });
 
 // DB & Startup
@@ -76,9 +66,9 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://harishpblr2007_db_user
 
 mongoose
   .connect(MONGO_URI)
-  .then(() => console.log("✅ Atlas Connected (v1.0.9)"))
+  .then(() => console.log("✅ Atlas Connected (v1.0.12)"))
   .catch((err) => console.error("❌ Atlas Connection Error:", err));
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 v1.0.9 running on port ${PORT}`);
+  console.log(`🚀 v1.0.12 running on port ${PORT}`);
 });
