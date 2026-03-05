@@ -1,7 +1,6 @@
 import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import path from "path";
 
 // Route Imports
 import studentRoutes from "./routes/studentRoutes.js";
@@ -34,21 +33,22 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.get("/api/test", async (req, res) => {
   try {
     const isConn = mongoose.connection.readyState === 1;
-    let studentCount = 0;
-    if (isConn) {
-      studentCount = await mongoose.connection.db.collection('students').countDocuments();
-    }
+    const studentCount = isConn ? await mongoose.connection.db.collection('students').countDocuments() : 0;
     res.json({
-      status: "EduTrack API v1.0.8 Online",
-      deployedAt: "2026-03-05T06:38:00Z",
+      status: "EduTrack API v1.0.9 Online",
+      deployedAt: new Date().toISOString(),
       database: isConn ? "Connected" : "Disconnected",
       dbName: isConn ? mongoose.connection.db.databaseName : "Checking...",
-      students: studentCount,
-      environment: process.env.NODE_ENV
+      students: studentCount
     });
   } catch (err) {
     res.status(503).json({ status: "Maintenance", error: err.message });
   }
+});
+
+// Unique Check for v1.0.9
+app.get("/api/v109-check", (req, res) => {
+  res.json({ message: "v1.0.9 is officially LIVE on Render", timestamp: "2026-03-05T06:45:00Z" });
 });
 
 // API Routes
@@ -61,7 +61,7 @@ app.use("/api/achievements", achievementRoutes);
 
 // Root Fallback
 app.get("/", (req, res) => {
-  res.send(`<h1>EduTrack API v1.0.7</h1><p>Status: Active</p><p>Backend is operational. Please use the <a href="https://edutrack-7063e.web.app">Frontend Dashboard</a>.</p>`);
+  res.send(`<h1>EduTrack API v1.0.9</h1><p>Status: Active</p><p>Backend is operational. Please use the <a href="https://edutrack-7063e.web.app">Frontend Dashboard</a>.</p>`);
 });
 
 // DB & Startup
@@ -70,9 +70,9 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://harishpblr2007_db_user
 
 mongoose
   .connect(MONGO_URI)
-  .then(() => console.log("✅ Atlas Connected"))
+  .then(() => console.log("✅ Atlas Connected (v1.0.9)"))
   .catch((err) => console.error("❌ Atlas Connection Error:", err));
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 v1.0.7 running on port ${PORT}`);
+  console.log(`🚀 v1.0.9 running on port ${PORT}`);
 });
