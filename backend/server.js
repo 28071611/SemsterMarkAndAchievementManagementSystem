@@ -1,30 +1,21 @@
 import express from "express";
 import mongoose from "mongoose";
-import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
 
+// Route Imports
 import studentRoutes from "./routes/studentRoutes.js";
-import authRoutes from "./routes/authRoutes.js"; // ✅ ONLY ONCE
+import authRoutes from "./routes/authRoutes.js";
 import semesterRoutes from "./routes/semesterRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
 import courseRoutes from "./routes/courseRoutes.js";
 import achievementRoutes from "./routes/achievementRoutes.js";
+
 dotenv.config();
 
 const app = express();
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads'), {
-  maxAge: '1d',
-  etag: true
-}));
 
-// Request Logger
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  next();
-});
-
-// Manual CORS Middleware (Aggressive)
+// Manual CORS - Ultra Permissive for Firebase
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
@@ -39,89 +30,48 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-app.get("/", async (req, res) => {
-  try {
-    const isConn = mongoose.connection.readyState === 1;
-    const dbName = isConn ? mongoose.connection.db.databaseName : "Connecting...";
-    const count = isConn ? await mongoose.connection.db.collection('students').countDocuments() : 0;
-    res.send(`<h1>EduTrack Backend v1.0.6</h1><p>Database: ${dbName}</p><p>Students: ${count}</p><p>Status: ${isConn ? 'Connected' : 'Connecting'}</p>`);
-  } catch (e) {
-    res.send(`<h1>EduTrack Backend v1.0.6</h1><p>Status: Error</p><p>Error: ${e.message}</p>`);
-  }
-});
-
-// Health Check
+// Health Check & Version Discovery
 app.get("/api/test", async (req, res) => {
   try {
     const isConn = mongoose.connection.readyState === 1;
     let studentCount = 0;
-
     if (isConn) {
       studentCount = await mongoose.connection.db.collection('students').countDocuments();
     }
-
     res.json({
-      status: "EduTrack API v1.0.6 Running",
+      status: "EduTrack API v1.0.7 Online",
       database: isConn ? "Connected" : "Disconnected",
-      studentCount,
-      dbName: isConn ? mongoose.connection.db.databaseName : "Connecting...",
-      env: process.env.NODE_ENV
+      dbName: isConn ? mongoose.connection.db.databaseName : "Checking...",
+      students: studentCount,
+      environment: process.env.NODE_ENV
     });
   } catch (err) {
-    res.json({ status: "Error", error: err.message });
+    res.status(503).json({ status: "Maintenance", error: err.message });
   }
 });
 
-// Routes
+// API Routes
+app.use("/api/students", studentRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/api/semesters", semesterRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/achievements", achievementRoutes);
-app.use("/api/students", studentRoutes);
-app.use("/api/auth", authRoutes);
 
-// Debug DB route
-app.get("/api/debug-db", async (req, res) => {
-  try {
-    const counts = {
-      students: await mongoose.connection.db.collection('students').countDocuments(),
-      semesters: await mongoose.connection.db.collection('semesters').countDocuments(),
-      projects: await mongoose.connection.db.collection('projects').countDocuments(),
-      achievements: await mongoose.connection.db.collection('achievements').countDocuments(),
-      dbName: mongoose.connection.db.databaseName,
-      status: mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected'
-    };
-    res.json(counts);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+// Root Fallback
+app.get("/", (req, res) => {
+  res.send(`<h1>EduTrack API v1.0.7</h1><p>Status: Active</p><p>Backend is operational. Please use the <a href="https://edutrack-7063e.web.app">Frontend Dashboard</a>.</p>`);
 });
 
-import fs from 'fs';
-const __dirname = path.resolve();
-const buildPath = path.join(__dirname, 'build');
-const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
-
-if (isProduction) {
-  if (fs.existsSync(buildPath)) {
-    app.use(express.static(buildPath));
-    app.get('*', (req, res) => {
-      if (!req.path.startsWith('/api/') && !req.path.startsWith('/uploads/')) {
-        res.sendFile(path.join(buildPath, 'index.html'));
-      }
-    });
-  }
-}
-
-// DB + Server
+// DB & Startup
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://harishpblr2007_db_user:Harish2807@cluster0.yaga33w.mongodb.net/edutrack?appName=Cluster0';
 
 mongoose
   .connect(MONGO_URI)
-  .then(() => console.log("✅ MongoDB Connected"))
-  .catch((err) => console.error("❌ DB Error:", err));
+  .then(() => console.log("✅ Atlas Connected"))
+  .catch((err) => console.error("❌ Atlas Connection Error:", err));
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 v1.0.7 running on port ${PORT}`);
 });
