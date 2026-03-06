@@ -14,9 +14,9 @@ dotenv.config();
 
 const app = express();
 
-// v1.1.0 FINAL SYNC (Priority #1)
-app.get("/api/v110-sync", (req, res) => res.json({
-  status: "v1.1.0 ACTIVE",
+// v1.1.1 FINAL SYNC (Priority #1)
+app.get("/api/v111-sync", (req, res) => res.json({
+  status: "v1.1.1 ACTIVE",
   deployedAt: new Date().toISOString(),
   info: "This is a pure API service for EduTrack Firebase Frontend"
 }));
@@ -32,6 +32,8 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+app.use('/uploads', express.static('uploads'));
 
 // Health Check
 app.get("/api/test", async (req, res) => {

@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../services/api";
 
 export default function Students() {
   const [name, setName] = useState("");
@@ -19,7 +18,7 @@ export default function Students() {
   // 📥 Fetch students
   const fetchStudents = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/students", {
+      const res = await fetch(`${API_BASE_URL}/students`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -44,7 +43,7 @@ export default function Students() {
 
   // ➕ Save student
   const submit = async () => {
-    await fetch("http://localhost:5000/api/students", {
+    await fetch(`${API_BASE_URL}/students`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

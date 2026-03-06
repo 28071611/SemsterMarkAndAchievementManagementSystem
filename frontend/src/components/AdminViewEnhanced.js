@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { LogOut, Search, Users, TrendingUp, BookOpen, Award, Download, Filter, ChevronDown, Eye, Edit, Trash2, Mail, Calendar, GraduationCap, Code, Trophy, FileText, Activity, Database, Server, CheckCircle, AlertCircle, RefreshCw, X } from 'lucide-react';
 import ThemeToggle from './ui/ThemeToggle';
-import { api } from '../services/api';
+import { api, API_BASE_URL } from '../services/api';
 
 const AdminView = ({ students, setStudents, setView, adminToken }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -1362,7 +1362,7 @@ const AdminView = ({ students, setStudents, setView, adminToken }) => {
                         <div className="flex items-center gap-2">
                           <FileText size={16} className="text-red-500" />
                           <button
-                            onClick={() => window.open(`http://localhost:5000/uploads/projects/${project.pdfFileName}`, '_blank')}
+                            onClick={() => window.open(`${API_BASE_URL.replace('/api', '')}/uploads/projects/${project.pdfFileName}`, '_blank')}
                             className="text-blue-600 dark:text-blue-400 hover:underline text-sm font-medium"
                           >
                             View PDF: {project.pdfFileName}
@@ -1448,7 +1448,7 @@ const AdminView = ({ students, setStudents, setView, adminToken }) => {
                         <div className="flex items-center gap-2">
                           <Award size={16} className="text-green-500" />
                           <button
-                            onClick={() => window.open(`http://localhost:5000/uploads/courses/${course.certificateFileName}`, '_blank')}
+                            onClick={() => window.open(`${API_BASE_URL.replace('/api', '')}/uploads/courses/${course.certificateFileName}`, '_blank')}
                             className="text-blue-600 dark:text-blue-400 hover:underline text-sm font-medium"
                           >
                             View Certificate: {course.certificateFileName}
