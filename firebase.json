@@ -9,7 +9,7 @@
         "rewrites": [
             {
                 "source": "/api/**",
-                "destination": "https://edutrack-api.onrender.com/api/**"
+                "destination": "https://semstermarkandachievementmanagementsyste.onrender.com/api/**"
             },
             {
                 "source": "**",
