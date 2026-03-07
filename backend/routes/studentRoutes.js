@@ -168,9 +168,10 @@ router.post("/", async (req, res) => {
     let student = await Student.findOne({ registerNumber });
 
     if (!student) {
-      // Check if email already exists
-      if (email) {
-        const existingEmail = await Student.findOne({ email });
+      const generatedEmail = email || (name ? `${name.trim().toLowerCase().replace(/\s+/g, '.')}@srishakthi.ac.in` : '');
+
+      if (generatedEmail) {
+        const existingEmail = await Student.findOne({ email: generatedEmail });
         if (existingEmail) {
           return res.status(400).json({ error: "Email already registered" });
         }
@@ -179,7 +180,7 @@ router.post("/", async (req, res) => {
       student = new Student({
         name,
         registerNumber,
-        email,
+        email: generatedEmail,
         phone: phone || '',
         department,
         year,

@@ -433,40 +433,45 @@ const AdminView = ({ students, setStudents, setView, adminToken }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800 pb-20">
       {/* Header */}
-      <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-b border-slate-200 dark:border-slate-700 px-6 py-6 sticky top-0 z-30 shadow-lg">
-        <div className="flex justify-between items-center">
+      <header className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-lg border-b border-slate-200 dark:border-slate-700 px-4 py-4 md:px-6 md:py-6 sticky top-0 z-30 shadow-lg">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-              <Database size={24} className="text-white" />
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
+              <Database size={20} className="text-white md:hidden" />
+              <Database size={24} className="text-white hidden md:block" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-slate-800 dark:text-white">MongoDB Admin Dashboard</h1>
-              <p className="text-slate-500 dark:text-slate-400 text-sm flex items-center gap-2">
+              <h1 className="text-lg md:text-2xl font-black text-slate-800 dark:text-white leading-tight">MongoDB Admin Dashboard</h1>
+              <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm flex items-center gap-2">
                 <Server size={14} />
-                Connected to edutrack database
+                <span className="hidden sm:inline">Connected to edutrack database</span>
+                <span className="sm:hidden">edutrack db</span>
                 <span className={`w-2 h-2 rounded-full ${dbStatus === 'connected' ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></span>
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3 w-full lg:w-auto">
             <button
               onClick={refreshData}
               disabled={refreshing}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-3 py-2 md:px-4 md:py-2 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm md:text-base"
             >
               <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
-              {refreshing ? 'Refreshing...' : 'Refresh'}
+              <span>{refreshing ? '...' : 'Refresh'}</span>
             </button>
             <button
               onClick={() => exportData('csv')}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors"
+              className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-3 py-2 md:px-4 md:py-2 bg-green-600 text-white rounded-xl font-medium hover:bg-green-700 transition-colors text-sm md:text-base"
             >
               <Download size={16} />
-              Export CSV
+              <span className="hidden sm:inline">Export CSV</span>
+              <span className="sm:hidden">Export</span>
             </button>
-            <ThemeToggle />
-            <button onClick={() => setView('landing')} className="bg-slate-100 dark:bg-slate-700 p-3 rounded-2xl text-slate-600 dark:text-slate-400 hover:text-red-500 transition-all border border-slate-200 dark:border-slate-600">
-              <LogOut size={20} />
+            <div className="flex-shrink-0">
+              <ThemeToggle />
+            </div>
+            <button onClick={() => setView('landing')} className="bg-slate-100 dark:bg-slate-700 p-2 md:p-3 rounded-2xl text-slate-600 dark:text-slate-400 hover:text-red-500 transition-all border border-slate-200 dark:border-slate-600 flex-shrink-0">
+              <LogOut size={18} />
             </button>
           </div>
         </div>
