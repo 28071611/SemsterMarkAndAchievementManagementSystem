@@ -168,7 +168,7 @@ router.post("/", async (req, res) => {
     let student = await Student.findOne({ registerNumber });
 
     if (!student) {
-      const generatedEmail = email || (name ? `${name.trim().toLowerCase().replace(/\s+/g, '.')}@srishakthi.ac.in` : '');
+      const generatedEmail = email || (name ? `${name.trim().toLowerCase().replace(/\s+/g, '')}@srishakthi.ac.in` : '');
 
       if (generatedEmail) {
         const existingEmail = await Student.findOne({ email: generatedEmail });

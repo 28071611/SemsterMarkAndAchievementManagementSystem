@@ -24,7 +24,7 @@ async function migrate() {
         let updatedCount = 0;
         for (const student of students) {
             if (student.name) {
-                let cleanName = student.name.trim().toLowerCase().replace(/\s+/g, '.');
+                let cleanName = student.name.trim().toLowerCase().replace(/\s+/g, '');
                 let baseEmail = `${cleanName}@srishakthi.ac.in`;
                 let finalEmail = baseEmail;
                 let suffix = 1;
